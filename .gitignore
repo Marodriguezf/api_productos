@@ -1,0 +1,26 @@
+# Entorno
+.env
+venv/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Base de datos local
+db.sqlite3
+db.sqlite3-journal
+
+# Editores
+.vscode/
+.idea/
+*.swp
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Estaticos recolectados
+staticfiles/

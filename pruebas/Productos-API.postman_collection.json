@@ -1,0 +1,93 @@
+{
+  "info": {
+    "name": "API de Productos - Django REST Framework",
+    "description": "Coleccion para probar los servicios RESTful CRUD de Producto.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000/api" },
+    { "key": "producto_id", "value": "1" }
+  ],
+  "item": [
+    {
+      "name": "1. GET - Listar productos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/productos", "host": ["{{base_url}}"], "path": ["productos"] }
+      }
+    },
+    {
+      "name": "2. POST - Crear producto",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Teclado mecanico\",\n  \"descripcion\": \"Teclado con switches rojos\",\n  \"precio\": \"250000.00\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/productos", "host": ["{{base_url}}"], "path": ["productos"] }
+      }
+    },
+    {
+      "name": "3. GET - Consultar producto por id",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/productos/{{producto_id}}", "host": ["{{base_url}}"], "path": ["productos", "{{producto_id}}"] }
+      }
+    },
+    {
+      "name": "4. PUT - Actualizar producto",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Teclado mecanico RGB\",\n  \"descripcion\": \"Version actualizada con iluminacion\",\n  \"precio\": \"310000.00\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/productos/{{producto_id}}", "host": ["{{base_url}}"], "path": ["productos", "{{producto_id}}"] }
+      }
+    },
+    {
+      "name": "5. DELETE - Eliminar producto",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": { "raw": "{{base_url}}/productos/{{producto_id}}", "host": ["{{base_url}}"], "path": ["productos", "{{producto_id}}"] }
+      }
+    },
+    {
+      "name": "6. ERROR - Producto inexistente (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{base_url}}/productos/9999", "host": ["{{base_url}}"], "path": ["productos", "9999"] }
+      }
+    },
+    {
+      "name": "7. ERROR - Precio negativo (400)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Producto invalido\",\n  \"descripcion\": \"Prueba de validacion\",\n  \"precio\": \"-5000\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/productos", "host": ["{{base_url}}"], "path": ["productos"] }
+      }
+    },
+    {
+      "name": "8. ERROR - Nombre duplicado (409)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Teclado mecanico\",\n  \"descripcion\": \"Nombre repetido\",\n  \"precio\": \"99000\"\n}"
+        },
+        "url": { "raw": "{{base_url}}/productos", "host": ["{{base_url}}"], "path": ["productos"] }
+      }
+    }
+  ]
+}
