@@ -1,9 +1,16 @@
-# API de Productos — Servicios RESTful CRUD
+# API de Productos — REST y GraphQL
 
-Backend de una aplicación web que expone servicios API REST para gestionar productos,
-construido con **Django REST Framework** y **Django ORM**.
+Backend de una aplicación web que expone la gestión de productos a través de **dos
+protocolos**: servicios API REST y una API GraphQL. Construido con **Django**,
+**Django REST Framework**, **Strawberry GraphQL** y **Django ORM**.
 
-Módulo: Arquitectura de Aplicaciones Web — Unidad 2.
+Módulo: Arquitectura de Aplicaciones Web — Unidades 2 y 3.
+
+- **Unidad 2** — Servicios RESTful CRUD sobre base de datos.
+- **Unidad 3** — Integración de la librería GraphQL.
+
+Ambas capas comparten el mismo modelo y la misma capa de servicios: las reglas de negocio
+se escriben una sola vez y cada protocolo es únicamente una puerta de entrada al dominio.
 
 ---
 
@@ -33,11 +40,16 @@ api-productos/
 │   ├── apps.py
 │   ├── domain/
 │   │   └── exceptions.py        # Excepciones propias del dominio
-│   ├── api/
+│   ├── api/                     # Capa REST
 │   │   ├── serializers.py       # Validación y forma del JSON
 │   │   ├── views.py             # Endpoints HTTP
 │   │   ├── urls.py              # Rutas del módulo
 │   │   └── handlers.py          # Manejo centralizado de errores
+│   ├── graphql_api/             # Capa GraphQL
+│   │   ├── types.py             # Tipos del esquema
+│   │   ├── queries.py           # Consultas de lectura
+│   │   ├── mutations.py         # Operaciones de escritura
+│   │   └── schema.py            # Ensamblaje del esquema
 │   ├── migrations/              # Migraciones generadas por el ORM
 │   └── tests/
 │       └── test_producto_api.py # 10 pruebas automatizadas
@@ -49,17 +61,18 @@ api-productos/
 **Flujo de una petición:**
 
 ```
-Cliente HTTP → urls.py → views.py → serializers.py (validación)
-                            ↓
-                       services.py (reglas de negocio)
-                            ↓
-                     repositories.py (ORM)
-                            ↓
-                       Base de datos
+Cliente REST  → api/urls.py → api/views.py → serializers.py
+                                     ↘
+                                      services.py  (reglas de negocio)
+                                     ↗        ↓
+Cliente GraphQL → /graphql/ → queries.py    repositories.py (ORM)
+                              mutations.py        ↓
+                                              Base de datos
 ```
 
-Si algo falla en cualquier punto, `handlers.py` intercepta la excepción y devuelve
-siempre la misma estructura JSON de error.
+Ambos protocolos convergen en `services.py`. Si algo falla en la capa REST,
+`handlers.py` intercepta la excepción y devuelve siempre la misma estructura JSON de
+error; en GraphQL los fallos se reportan en el arreglo `errors` de la respuesta.
 
 ---
 
@@ -126,7 +139,7 @@ DATABASE_URL=postgresql://postgres.xxxx:PASSWORD@aws-0-us-east-1.pooler.supabase
 
 ---
 
-## Endpoints
+## Endpoints REST
 
 | Método   | Ruta                    | Descripción                     | Respuesta |
 |----------|-------------------------|---------------------------------|-----------|
@@ -145,7 +158,129 @@ Documentación interactiva:
 
 ---
 
-## Ejemplos
+## API GraphQL
+
+Toda la API GraphQL se expone en **un único endpoint**, a diferencia de REST que necesita
+una ruta por recurso y operación:
+
+```
+POST http://127.0.0.1:8000/graphql/
+```
+
+Abriendo esa misma URL en el navegador se carga **GraphiQL**, una interfaz interactiva
+que incluye el explorador del esquema. El esquema no se escribe a mano: Strawberry lo
+deriva de las anotaciones de tipo de Python.
+
+### Operaciones disponibles
+
+| Tipo | Operación | Descripción |
+|------|-----------|-------------|
+| Query | `productos` | Lista todos los productos |
+| Query | `producto(id)` | Consulta un producto por identificador |
+| Query | `buscarProductos(texto)` | Filtra por coincidencia en el nombre |
+| Mutation | `crearProducto(datos)` | Crea un producto |
+| Mutation | `actualizarProducto(id, datos)` | Actualiza los campos enviados |
+| Mutation | `eliminarProducto(id)` | Elimina un producto |
+
+### Consultas declarativas
+
+El cliente define la forma de la respuesta. Misma consulta, distinto resultado:
+
+```graphql
+{
+  productos {
+    id
+    nombre
+    descripcion
+    precio
+  }
+}
+```
+
+```graphql
+{
+  productos {
+    nombre
+  }
+}
+```
+
+La segunda devuelve únicamente los nombres. En REST, el servidor decide qué campos
+entrega y el cliente recibe información que quizá no necesita.
+
+### Mutaciones
+
+```graphql
+mutation {
+  crearProducto(datos: {
+    nombre: "Teclado mecánico"
+    descripcion: "Switches rojos"
+    precio: "250000.00"
+  }) {
+    id
+    nombre
+    precio
+  }
+}
+```
+
+```graphql
+mutation {
+  actualizarProducto(id: 1, datos: { precio: "310000.00" }) {
+    id
+    nombre
+    precio
+  }
+}
+```
+
+```graphql
+mutation {
+  eliminarProducto(id: 2) {
+    exito
+    mensaje
+  }
+}
+```
+
+### Configuración aplicada
+
+1. Instalación de la librería con pip:
+
+   ```bash
+   pip install strawberry-graphql-django
+   ```
+
+2. Registro de `strawberry_django` en `INSTALLED_APPS` (`config/settings.py`).
+
+3. Creación del paquete `productos/graphql_api/` con los tipos, las consultas, las
+   mutaciones y el ensamblaje del esquema.
+
+4. Exposición del endpoint en `config/urls.py`:
+
+   ```python
+   path(
+       "graphql/",
+       csrf_exempt(GraphQLView.as_view(schema=schema, graphql_ide="graphiql")),
+       name="graphql",
+   ),
+   ```
+
+   El parámetro `graphql_ide` habilita GraphiQL. `csrf_exempt` permite probar el endpoint
+   desde clientes externos como Postman o Insomnia.
+
+### Por qué Strawberry y no Graphene
+
+| Criterio | Graphene-Django | Strawberry |
+|---|---|---|
+| Definición de tipos | Clases con campos propios | Anotaciones de tipo nativas de Python |
+| Soporte `async` | Limitado | Nativo |
+| Mantenimiento | Ritmo lento | Activo |
+| Compatibilidad Django 6 | Irregular | Verificada |
+
+---
+
+## Ejemplos REST
 
 **Crear un producto**
 
@@ -193,6 +328,8 @@ Respuesta `201 Created`:
 
 ## Manejo de errores
 
+En REST, todas las respuestas de error comparten la misma estructura:
+
 | Situación                       | Código | Identificador             |
 |---------------------------------|--------|---------------------------|
 | Datos inválidos                 | 400    | `error_de_solicitud`      |
@@ -200,8 +337,8 @@ Respuesta `201 Created`:
 | Nombre de producto repetido     | 409    | `nombre_duplicado`        |
 | Error no previsto               | 500    | `error_interno`           |
 
-Todas las respuestas de error comparten la misma estructura, lo que facilita el
-manejo desde cualquier cliente.
+En GraphQL la semántica es distinta: el protocolo responde siempre con HTTP 200 y
+reporta los fallos en el arreglo `errors` del cuerpo de la respuesta.
 
 ---
 
@@ -220,7 +357,13 @@ Para pruebas manuales, importar en Postman:
 
 ## Tecnologías
 
-- Django 5.1+ y Django REST Framework
-- Django ORM
-- drf-spectacular (OpenAPI / Swagger)
-- SQLite (local) / PostgreSQL (nube)
+| Componente | Tecnología |
+|---|---|
+| Lenguaje | Python 3.10+ |
+| Framework | Django 5.1+ |
+| API REST | Django REST Framework |
+| API GraphQL | Strawberry GraphQL (`strawberry-graphql-django`) |
+| ORM | Django ORM |
+| Documentación REST | drf-spectacular (OpenAPI / Swagger) |
+| Documentación GraphQL | GraphiQL (esquema autogenerado) |
+| Base de datos | SQLite (local) / PostgreSQL (nube) |
