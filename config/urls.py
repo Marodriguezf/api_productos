@@ -7,6 +7,10 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+from django.views.decorators.csrf import csrf_exempt
+from strawberry.django.views import GraphQLView
+
+from productos.graphql_api.schema import schema
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -23,5 +27,11 @@ urlpatterns = [
         "api/redoc/",
         SpectacularRedocView.as_view(url_name="schema"),
         name="redoc",
+    ),
+    # GraphQL
+    path(
+        "graphql/",
+        csrf_exempt(GraphQLView.as_view(schema=schema, graphql_ide="graphiql")),
+        name="graphql",
     ),
 ]

@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     # Terceros
     "rest_framework",
     "drf_spectacular",
+    "strawberry_django",
     # Aplicaciones propias
     "productos",
 ]
