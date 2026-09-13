@@ -4,13 +4,21 @@ Backend de una aplicación web que expone la gestión de productos a través de 
 protocolos**: servicios API REST y una API GraphQL. Construido con **Django**,
 **Django REST Framework**, **Strawberry GraphQL** y **Django ORM**.
 
-Módulo: Arquitectura de Aplicaciones Web — Unidades 2 y 3.
+Módulo: Arquitectura de Aplicaciones Web — Unidades 2, 3 y 4.
 
 - **Unidad 2** — Servicios RESTful CRUD sobre base de datos.
 - **Unidad 3** — Integración de la librería GraphQL.
+- **Unidad 4** — Comparación de modelos de API junto al proyecto gRPC.
 
 Ambas capas comparten el mismo modelo y la misma capa de servicios: las reglas de negocio
 se escriben una sola vez y cada protocolo es únicamente una puerta de entrada al dominio.
+
+Proyecto complementario:
+[api_productos_grpc](https://github.com/Marodriguezf/api_productos_grpc) expone la misma
+entidad mediante gRPC y Protocol Buffers, con idéntica arquitectura por capas. Entre los
+dos repositorios se cubren los tres modelos de construcción de API: REST, GraphQL y gRPC.
+
+---
 
 ---
 
